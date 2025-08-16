@@ -28,11 +28,6 @@ class RaceScene extends Phaser.Scene {
   pegs!: Phaser.GameObjects.GameObject[];
   bumpers!: Phaser.Physics.Matter.Image[];
   slides!: Phaser.GameObjects.Rectangle[]; // sensors
-  cameras!: Phaser.Cameras.Scene2D.CameraManager;
-  add!: Phaser.GameObjects.GameObjectFactory;
-  matter!: Phaser.Physics.Matter.MatterPhysics;
-  time!: Phaser.Time.Clock;
-  scale!: Phaser.Scale.ScaleManager;
   running = false;
   onWinner?: (id: number) => void;
   numbers: number[] = []; // which IDs to spawn
@@ -150,8 +145,8 @@ class RaceScene extends Phaser.Scene {
       const m = this.matter.add.image(
         worldW / 2 + rand(-60, 60),
         80 - rand(0, 200),
-        undefined,
-        undefined,
+        "",
+        "",
         {
           shape: { type: "circle", radius },
           restitution: 0.9,
@@ -179,26 +174,23 @@ class RaceScene extends Phaser.Scene {
     }
 
     // collisions with slides (apply additional downward force when overlapping)
-    this.matter.world.on(
-      "collisionactive",
-      (evt: Phaser.Physics.Matter.Events.CollisionPair) => {
-        for (const pair of (evt as any).pairs) {
-          const a = pair.bodyA.gameObject as any;
-          const b = pair.bodyB.gameObject as any;
-          const slideObj = a && a.isSlide ? a : b && b.isSlide ? b : null;
-          const marble =
-            a && a.getData && a.getData("id")
-              ? a
-              : b && b.getData && b.getData("id")
-              ? b
-              : null;
-          if (slideObj && marble && marble.body) {
-            // apply downward force
-            marble.body.force.y += 0.0025; // gentle but continuous while overlapping
-          }
+    this.matter.world.on("collisionactive", (evt: MatterJS.ICollisionPair) => {
+      for (const pair of (evt as any).pairs) {
+        const a = pair.bodyA.gameObject as any;
+        const b = pair.bodyB.gameObject as any;
+        const slideObj = a && a.isSlide ? a : b && b.isSlide ? b : null;
+        const marble =
+          a && a.getData && a.getData("id")
+            ? a
+            : b && b.getData && b.getData("id")
+            ? b
+            : null;
+        if (slideObj && marble && marble.body) {
+          // apply downward force
+          marble.body.force.y += 0.0025; // gentle but continuous while overlapping
         }
       }
-    );
+    });
 
     this.running = true;
   }
@@ -329,7 +321,7 @@ export default function MarbleRacePhaser() {
         Math.min(1080, (containerRef.current!.clientWidth || 1000) * 0.56)
       ),
       backgroundColor: "#0b1220",
-      physics: { default: "matter", matter: { gravity: { y: 1.1 } } },
+      physics: { default: "matter", matter: { gravity: { x: 0, y: 1.1 } } },
       scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
