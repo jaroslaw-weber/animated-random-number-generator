@@ -5,7 +5,7 @@ export class RaceScene extends Phaser.Scene {
   worldW!: number;
   worldH!: number;
   finishY!: number;
-  marbles!: Phaser.Physics.Matter.Image[];
+  marbles!: Phaser.Physics.Matter.Sprite[];
   pegs!: Phaser.GameObjects.GameObject[];
   bumpers!: Phaser.Physics.Matter.Image[];
   slides!: Phaser.GameObjects.Rectangle[]; // sensors
@@ -32,6 +32,10 @@ export class RaceScene extends Phaser.Scene {
     this.finishY = data.finishY;
   }
 
+  preload() {
+    // No image preloading needed for SVG-like marbles
+  }
+
   create() {
     const { worldW, worldH } = this;
     this.cameras.main.setBounds(0, 0, worldW, worldH);
@@ -53,6 +57,7 @@ export class RaceScene extends Phaser.Scene {
       false,
       true
     );
+    this.matter.world.setGravity(0, 0.0005); // Adjust global gravity
 
     // slides (sensors that add force downward)
     this.slides = [];
@@ -122,26 +127,27 @@ export class RaceScene extends Phaser.Scene {
     this.marbles = [];
     const radius = 12;
     for (const id of this.numbers) {
-      const m = this.matter.add.image(
-        worldW / 2 + rand(-60, 60),
-        80 - rand(0, 200),
-        "",
-        "",
-        {
-          shape: { type: "circle", radius },
-          restitution: 0.9,
-          frictionAir: 0.005,
-          friction: 0.005,
-          frictionStatic: 0,
-        }
-      );
-      m.setCircle(radius);
-      m.setTint(
+      const x = worldW / 2 + rand(-60, 60);
+      const y = 80 - rand(0, 200);
+
+      // Create a graphics object for the marble
+      const circle = this.add.circle(x, y, radius, 0xffffff); // Start with white, will be tinted
+      circle.setFillStyle(
         Phaser.Display.Color.HSVToRGB(((id * 137.5) % 360) / 360, 0.85, 0.95)
           .color
       );
+      circle.setDepth(1);
+
+      // Add the circle to Matter.js physics
+      const m = this.matter.add.gameObject(circle, {
+        shape: { type: "circle", radius },
+        restitution: 0.9,
+        frictionAir: 0.01,
+        friction: 0.01,
+        frictionStatic: 0,
+      }) as Phaser.Physics.Matter.Sprite;
       m.setData("id", id);
-      m.setDepth(1);
+
       // number label
       const label = this.add.text(0, 0, String(id), {
         fontSize: "12px",
@@ -167,7 +173,7 @@ export class RaceScene extends Phaser.Scene {
             : null;
         if (slideObj && marble && marble.body) {
           // apply downward force
-          marble.body.force.y += 0.0025; // gentle but continuous while overlapping
+          marble.body.force.y += 0.0015; // gentle but continuous while overlapping
         }
       }
     });
@@ -195,33 +201,36 @@ export class RaceScene extends Phaser.Scene {
       leaders.push({ x: m.x, y: m.y });
     }
 
-    // Camera: frame top 20 (smallest y)
-    leaders.sort((a, b) => a.y - b.y);
-    const top = leaders.slice(0, Math.min(this.topCount, leaders.length));
-    if (top.length) {
-      let minX = Infinity,
-        maxX = -Infinity,
-        minY = Infinity,
-        maxY = -Infinity;
-      for (const p of top) {
-        minX = Math.min(minX, p.x);
-        maxX = Math.max(maxX, p.x);
-        minY = Math.min(minY, p.y);
-        maxY = Math.max(maxY, p.y);
-      }
-      const pad = 140;
-      const w = maxX - minX + pad,
-        h = maxY - minY + pad;
-      const cx = (minX + maxX) / 2,
-        cy = (minY + maxY) / 2;
+    // Camera: track all active marbles horizontally and the lowest marble vertically
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let lowestY = -Infinity;
+
+    for (const m of this.marbles) {
+      minX = Math.min(minX, m.x);
+      maxX = Math.max(maxX, m.x);
+      lowestY = Math.max(lowestY, m.y);
+    }
+
+    if (this.marbles.length > 0) {
       const cam = this.cameras.main;
+      const horizontalPadding = 100; // Padding for horizontal view
+      const verticalPadding = 280; // Padding for vertical view
+
+      const targetWidth = maxX - minX + horizontalPadding;
+      const targetHeight = verticalPadding; // Keep vertical padding for zoom calculation
+
+      const cameraTargetX = minX + (targetWidth - horizontalPadding) / 2;
+      const cameraTargetY = lowestY;
+
       // Smooth pan
-      cam.pan(cx, cy, 250, "Sine.easeOut", false);
+      cam.pan(cameraTargetX, cameraTargetY, 500, "Sine.easeOut", false);
+
       // Smooth zoom to fit
-      const scaleX = this.scale.gameSize.width / (w || 1);
-      const scaleY = this.scale.gameSize.height / (h || 1);
-      const desiredZoom = clamp(Math.min(scaleX, scaleY), 0.8, 1.8);
-      cam.zoomTo(desiredZoom, 300);
+      const scaleX = this.scale.gameSize.width / (targetWidth || 1);
+      const scaleY = this.scale.gameSize.height / (targetHeight || 1);
+      const desiredZoom = clamp(Math.min(scaleX, scaleY), 0.5, 2.5);
+      cam.zoomTo(desiredZoom, 500);
     }
   }
 }
