@@ -57,14 +57,31 @@ export class RaceScene extends Phaser.Scene {
       false,
       true
     );
-    this.matter.world.setGravity(0, 0.0005); // Adjust global gravity
+    this.matter.world.setGravity(0, 0.1); // Adjust global gravity
+
+    // Add static walls to prevent marbles from exiting the play area
+    const wallThickness = 50; // Thickness of the walls
+    this.matter.add.rectangle(
+      -wallThickness / 2, // Left wall x-position (half thickness outside world)
+      worldH / 2,
+      wallThickness,
+      worldH,
+      { isStatic: true }
+    );
+    this.matter.add.rectangle(
+      worldW + wallThickness / 2, // Right wall x-position (half thickness outside world)
+      worldH / 2,
+      wallThickness,
+      worldH,
+      { isStatic: true }
+    );
 
     // slides (sensors that add force downward)
     this.slides = [];
     const slideDefs = [
-      { x: worldW * 0.15, y: 500, w: worldW * 0.7, h: 110 },
-      { x: worldW * 0.1, y: 1600, w: worldW * 0.8, h: 110 },
-      { x: worldW * 0.2, y: 2800, w: worldW * 0.6, h: 130 },
+      { x: worldW * 0.15, y: 250, w: worldW * 0.7, h: 110 },
+      { x: worldW * 0.1, y: 800, w: worldW * 0.8, h: 110 },
+      { x: worldW * 0.2, y: 1400, w: worldW * 0.6, h: 130 },
     ];
     for (const s of slideDefs) {
       const r = this.add
@@ -77,12 +94,25 @@ export class RaceScene extends Phaser.Scene {
 
     // pegs (static circles)
     this.pegs = [];
-    const rows = 30,
+    const rows = 15,
       cols = 10;
+    const initialTrackWidth = worldW * 0.8; // Initial width at the top
+    const finalTrackWidth = worldW * 0.4; // Final width at the bottom
+    const trackWidthDecreasePerPx =
+      (initialTrackWidth - finalTrackWidth) / worldH;
+
     for (let r = 0; r < rows; r++) {
+      const py = 200 + r * 110 + rand(-6, 6);
+      const currentTrackWidth = clamp(
+        initialTrackWidth - py * trackWidthDecreasePerPx,
+        finalTrackWidth,
+        initialTrackWidth
+      );
+      const startX = (worldW - currentTrackWidth) / 2;
+      const colWidth = currentTrackWidth / (cols + 1);
+
       for (let c = 0; c < cols; c++) {
-        const px = (worldW / (cols + 1)) * (c + 1) + (r % 2 ? 18 : -18);
-        const py = 200 + r * 110 + rand(-6, 6);
+        const px = startX + colWidth * (c + 1) + (r % 2 ? 18 : -18);
         const peg = this.add.circle(px, py, 6, 0x9fb3c8).setDepth(-2);
         const matterPeg = this.matter.add.gameObject(peg, {
           isStatic: true,
@@ -95,10 +125,12 @@ export class RaceScene extends Phaser.Scene {
     // bumpers (static rotated rectangles)
     this.bumpers = [];
     const bumps = [
-      { x: worldW * 0.25, y: 900, w: 140, h: 14, ang: -0.35 },
-      { x: worldW * 0.75, y: 1300, w: 140, h: 14, ang: 0.35 },
-      { x: worldW * 0.3, y: 2000, w: 160, h: 14, ang: 0.25 },
-      { x: worldW * 0.7, y: 2600, w: 160, h: 14, ang: -0.25 },
+      { x: worldW * 0.25, y: 450, w: 140, h: 14, ang: -0.35 }, // Top-left
+      { x: worldW * 0.75, y: 650, w: 140, h: 14, ang: 0.35 }, // Top-right
+      { x: worldW * 0.35, y: 1000, w: 160, h: 14, ang: 0.25 }, // Mid-left (adjusted)
+      { x: worldW * 0.65, y: 1300, w: 160, h: 14, ang: -0.25 }, // Mid-right (adjusted)
+      { x: worldW * 0.4, y: 1600, w: 180, h: 14, ang: -0.3 }, // Lower-left (new)
+      { x: worldW * 0.6, y: 1900, w: 180, h: 14, ang: 0.3 }, // Lower-right (new)
     ];
     for (const b of bumps) {
       const rect = this.add
@@ -141,7 +173,7 @@ export class RaceScene extends Phaser.Scene {
       // Add the circle to Matter.js physics
       const m = this.matter.add.gameObject(circle, {
         shape: { type: "circle", radius },
-        restitution: 0.9,
+        restitution: 0.98,
         frictionAir: 0.01,
         friction: 0.01,
         frictionStatic: 0,
@@ -149,11 +181,13 @@ export class RaceScene extends Phaser.Scene {
       m.setData("id", id);
 
       // number label
-      const label = this.add.text(0, 0, String(id), {
-        fontSize: "12px",
-        color: "#0b1220",
-        fontStyle: "bold",
-      });
+      const label = this.add
+        .text(0, 0, String(id), {
+          fontSize: "16px",
+          color: "#ffffff",
+          fontStyle: "bold",
+        })
+        .setDepth(2); // Set depth higher than marble
       label.setOrigin(0.5, 0.55);
       m.setData("label", label); // Store label in data
       this.marbles.push(m);
@@ -223,14 +257,17 @@ export class RaceScene extends Phaser.Scene {
       const cameraTargetX = minX + (targetWidth - horizontalPadding) / 2;
       const cameraTargetY = lowestY;
 
-      // Smooth pan
-      cam.pan(cameraTargetX, cameraTargetY, 500, "Sine.easeOut", false);
+      // Smooth camera follow using lerp
+      const lerpFactor = 0.08; // Adjust this value for desired smoothness (0.0 - 1.0)
+      cam.scrollX += (cameraTargetX - cam.width / 2 - cam.scrollX) * lerpFactor;
+      cam.scrollY +=
+        (cameraTargetY - cam.height / 2 - cam.scrollY) * lerpFactor;
 
       // Smooth zoom to fit
       const scaleX = this.scale.gameSize.width / (targetWidth || 1);
       const scaleY = this.scale.gameSize.height / (targetHeight || 1);
       const desiredZoom = clamp(Math.min(scaleX, scaleY), 0.5, 2.5);
-      cam.zoomTo(desiredZoom, 500);
+      cam.zoomTo(desiredZoom, 750); // Increased duration for smoother zoom
     }
   }
 }
