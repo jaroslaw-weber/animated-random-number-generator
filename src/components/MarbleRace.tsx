@@ -3,7 +3,8 @@ import { clamp } from "../utils/math";
 import { gameConfig, onWinner } from "../phaser/gameConfig";
 import { RaceScene } from "../phaser/RaceScene";
 import { ui } from "../styles/raceStyles";
-import { MAX, worldW, worldH, finishY } from "../constants/game";
+import { worldW, worldH, finishY } from "../constants/game";
+import { getGameConfig, type GameConfig } from "../utils/configLoader";
 
 // ---- React wrapper ----
 export default function MarbleRacePhaser() {
@@ -13,14 +14,25 @@ export default function MarbleRacePhaser() {
   const [winningMarbleId, setWinningMarbleId] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
+  const [gameSettings, setGameSettings] = useState<GameConfig>(getGameConfig());
+
+  useEffect(() => {
+    setGameSettings(getGameConfig());
+  }, []);
+
+  const maxNumber = useMemo(() => {
+    return gameSettings.mode === "numberRange"
+      ? gameSettings.numberRange.max
+      : gameSettings.nameList.length;
+  }, [gameSettings]);
 
   const remaining = useMemo(() => {
-    if (!noRepeats) return Array.from({ length: MAX }, (_, i) => i + 1);
+    if (!noRepeats) return Array.from({ length: maxNumber }, (_, i) => i + 1);
     const taken = new Set(history);
-    return Array.from({ length: MAX }, (_, i) => i + 1).filter(
+    return Array.from({ length: maxNumber }, (_, i) => i + 1).filter(
       (n) => !taken.has(n)
     );
-  }, [history, noRepeats]);
+  }, [history, noRepeats, maxNumber]);
 
   const destroyGame = () => {
     if (gameRef.current) {
@@ -29,7 +41,7 @@ export default function MarbleRacePhaser() {
     }
   };
 
-  const launchGame = (numbers: number[]) => {
+  const launchGame = (numbers: number[], config: GameConfig) => {
     destroyGame();
 
     const currentConfig = {
@@ -56,6 +68,7 @@ export default function MarbleRacePhaser() {
         worldW,
         worldH,
         finishY,
+        gameConfig: config, // Pass the loaded game config
       });
     });
   };
@@ -70,7 +83,10 @@ export default function MarbleRacePhaser() {
     setIsRacing(true);
     setWinningMarbleId(null); // Reset winning marble ID at the start of a new race
     launchGame(
-      noRepeats ? remaining : Array.from({ length: MAX }, (_, i) => i + 1)
+      noRepeats
+        ? remaining
+        : Array.from({ length: maxNumber }, (_, i) => i + 1),
+      gameSettings
     );
   };
 
