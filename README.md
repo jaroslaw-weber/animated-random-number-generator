@@ -39,7 +39,7 @@ Ensure you have [Bun](https://bun.sh/docs/installation) installed.
 
 1.  Clone the repository:
     ```sh
-    git clone https://github.com/your-username/animated-random-number-generator.git
+    git clone https://github.com/jaroslaw-weber/animated-random-number-generator.git
     cd animated-random-number-generator
     ```
 2.  Install dependencies:
