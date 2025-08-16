@@ -42,7 +42,7 @@ export class RaceScene extends Phaser.Scene {
 
     // background
     this.add
-      .rectangle(worldW / 2, worldH / 2, worldW, worldH, 0x0a3a18)
+      .rectangle(worldW / 2, worldH / 2, worldW, worldH, 0xf0f8ff)
       .setDepth(-10);
 
     // Matter config
@@ -57,7 +57,7 @@ export class RaceScene extends Phaser.Scene {
       false,
       true
     );
-    this.matter.world.setGravity(0, 0.1); // Adjust global gravity
+    this.matter.world.setGravity(0, 0.15); // Adjust global gravity
 
     // Track width calculations (moved here for reuse)
     const initialTrackWidth = worldW * 0.8; // Initial width at the top
@@ -70,7 +70,7 @@ export class RaceScene extends Phaser.Scene {
     const wallVisualThickness = 10; // Visual thickness for debugging
     const wallPhysicsThickness = 20; // Physics thickness for collision
 
-    for (let y = 0; y < worldH; y += wallSegmentHeight) {
+    for (let y = -200; y < worldH; y += wallSegmentHeight) {
       const currentTrackWidth = clamp(
         initialTrackWidth - y * trackWidthDecreasePerPx,
         finalTrackWidth,
@@ -94,7 +94,7 @@ export class RaceScene extends Phaser.Scene {
           y + wallSegmentHeight / 2,
           wallVisualThickness,
           wallSegmentHeight,
-          0x888888, // Grey color for walls
+          0x000000, // Black color for walls
           0.5
         )
         .setDepth(-5);
@@ -114,7 +114,7 @@ export class RaceScene extends Phaser.Scene {
           y + wallSegmentHeight / 2,
           wallVisualThickness,
           wallSegmentHeight,
-          0x888888, // Grey color for walls
+          0x000000, // Black color for walls
           0.5
         )
         .setDepth(-5);
@@ -129,7 +129,7 @@ export class RaceScene extends Phaser.Scene {
     ];
     for (const s of slideDefs) {
       const r = this.add
-        .rectangle(s.x + s.w / 2, s.y + s.h / 2, s.w, s.h, 0x44c7f4, 0.18)
+        .rectangle(s.x + s.w / 2, s.y + s.h / 2, s.w, s.h, 0xb0e0e6, 0.18)
         .setDepth(-5);
       this.matter.add.gameObject(r, { isStatic: true, isSensor: true });
       (r as any).isSlide = true;
@@ -143,7 +143,7 @@ export class RaceScene extends Phaser.Scene {
     // initialTrackWidth, finalTrackWidth, trackWidthDecreasePerPx are now defined above
 
     const pegRadius = 8;
-    const pegColor = 0xaaaaaa; // Grey color for pegs
+    const pegColor = 0x000000; // Black color for pegs
 
     for (let r = 0; r < rows; r++) {
       const y = (worldH / rows) * (r + 0.5); // Distribute rows evenly
@@ -185,7 +185,7 @@ export class RaceScene extends Phaser.Scene {
     ];
     for (const b of bumps) {
       const rect = this.add
-        .rectangle(b.x, b.y, b.w, b.h, 0x2b2f37)
+        .rectangle(b.x, b.y, b.w, b.h, 0x000000)
         .setDepth(-1);
       const body = this.matter.add.gameObject(rect, {
         isStatic: true,
@@ -197,11 +197,11 @@ export class RaceScene extends Phaser.Scene {
 
     // finish line visual
     this.add
-      .rectangle(worldW / 2, this.finishY, worldW - 20, 4, 0xffffff, 0.9)
+      .rectangle(worldW / 2, this.finishY, worldW - 20, 4, 0xfff0f5, 0.9)
       .setDepth(-3);
     this.add
       .text(16, this.finishY - 18, "FINISH", {
-        color: "#ffffff",
+        color: "#FFFAF0",
         fontSize: "12px",
       })
       .setDepth(-3);
@@ -235,7 +235,7 @@ export class RaceScene extends Phaser.Scene {
       const label = this.add
         .text(0, 0, String(id), {
           fontSize: "16px",
-          color: "#ffffff",
+          color: "#FFFAF0",
           fontStyle: "bold",
         })
         .setDepth(2); // Set depth higher than marble
