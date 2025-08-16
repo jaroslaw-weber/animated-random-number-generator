@@ -1,4 +1,3 @@
-import Phaser from "phaser";
 import { createWalls } from "./objects/Walls";
 import { createSlides } from "./objects/Slides";
 import { createPegs } from "./objects/Pegs";
