@@ -224,7 +224,7 @@ export class RaceScene extends Phaser.Scene {
       // Add the circle to Matter.js physics
       const m = this.matter.add.gameObject(circle, {
         shape: { type: "circle", radius },
-        restitution: 0.98,
+        restitution: 1.29,
         frictionAir: 0.01,
         friction: 0.01,
         frictionStatic: 0,

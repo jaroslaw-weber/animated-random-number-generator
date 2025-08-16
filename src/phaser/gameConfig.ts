@@ -5,10 +5,12 @@ export const onWinner = (
   id: number,
   setHistory: React.Dispatch<React.SetStateAction<number[]>>,
   setIsRacing: React.Dispatch<React.SetStateAction<boolean>>,
+  setWinningMarbleId: React.Dispatch<React.SetStateAction<number | null>>,
   noRepeats: boolean
 ) => {
   if (noRepeats) setHistory((h) => [...h, id]);
   setIsRacing(false);
+  setWinningMarbleId(id);
   // quick confetti
   const root = document.createElement("div");
   root.style.cssText =

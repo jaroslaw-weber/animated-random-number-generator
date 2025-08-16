@@ -79,4 +79,23 @@ export const ui: Record<string, React.CSSProperties> = {
     color: "#86efac",
   },
   small: { fontSize: 12, opacity: 0.8 },
+  winnerDisplay: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    fontSize: "3em",
+    fontWeight: "bold",
+    color: "#fff",
+    textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+    zIndex: 1000,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    padding: "20px 40px",
+    borderRadius: "15px",
+    textAlign: "center",
+  },
+  winnerNumber: {
+    fontSize: "1.5em",
+    color: "#22c55e",
+  },
 };

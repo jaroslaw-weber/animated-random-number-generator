@@ -10,6 +10,7 @@ export default function MarbleRacePhaser() {
   const [noRepeats, setNoRepeats] = useState(true);
   const [history, setHistory] = useState<number[]>([]);
   const [isRacing, setIsRacing] = useState(false);
+  const [winningMarbleId, setWinningMarbleId] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
 
@@ -51,7 +52,7 @@ export default function MarbleRacePhaser() {
       scene.scene.restart({
         numbers,
         onWinner: (id: number) =>
-          onWinner(id, setHistory, setIsRacing, noRepeats),
+          onWinner(id, setHistory, setIsRacing, setWinningMarbleId, noRepeats),
         worldW,
         worldH,
         finishY,
@@ -67,6 +68,7 @@ export default function MarbleRacePhaser() {
     if (isRacing) return;
     if (noRepeats && remaining.length === 0) return;
     setIsRacing(true);
+    setWinningMarbleId(null); // Reset winning marble ID at the start of a new race
     launchGame(
       noRepeats ? remaining : Array.from({ length: MAX }, (_, i) => i + 1)
     );
@@ -75,6 +77,7 @@ export default function MarbleRacePhaser() {
   const reset = () => {
     setHistory([]);
     setIsRacing(false);
+    setWinningMarbleId(null); // Reset winning marble ID on reset
     destroyGame();
   };
 
@@ -107,6 +110,11 @@ export default function MarbleRacePhaser() {
 
         <div style={ui.canvasWrap}>
           <div ref={containerRef} style={{ width: "100%", height: "60vh" }} />
+          {winningMarbleId !== null && !isRacing && (
+            <div style={ui.winnerDisplay}>
+              Winner: <span style={ui.winnerNumber}>{winningMarbleId}</span>
+            </div>
+          )}
         </div>
 
         <div style={ui.small}>Numbers (winners highlighted)</div>
