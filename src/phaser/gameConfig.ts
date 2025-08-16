@@ -50,7 +50,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   parent: "game-container", // This will be updated in MarbleRace.tsx
   width: 1000, // This will be updated in MarbleRace.tsx
   height: 560, // This will be updated in MarbleRace.tsx
-  backgroundColor: "#F0F8FF",
+  backgroundColor: "#D3D3D3",
   physics: { default: "matter", matter: { gravity: { x: 0, y: 2 } } },
   scale: {
     mode: Phaser.Scale.RESIZE,

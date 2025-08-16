@@ -42,7 +42,7 @@ export class RaceScene extends Phaser.Scene {
 
     // background
     this.add
-      .rectangle(worldW / 2, worldH / 2, worldW, worldH, 0xf0f8ff)
+      .rectangle(worldW / 2, worldH / 2, worldW, worldH, 0xd3d3d3)
       .setDepth(-10);
 
     // Matter config
@@ -208,7 +208,7 @@ export class RaceScene extends Phaser.Scene {
 
     // marbles
     this.marbles = [];
-    const radius = 12;
+    const radius = 16;
     for (const id of this.numbers) {
       const x = worldW / 2 + rand(-60, 60);
       const y = 80 - rand(0, 200);
@@ -224,22 +224,28 @@ export class RaceScene extends Phaser.Scene {
       // Add the circle to Matter.js physics
       const m = this.matter.add.gameObject(circle, {
         shape: { type: "circle", radius },
-        restitution: 1.29,
+        restitution: 1.1,
         frictionAir: 0.01,
         friction: 0.01,
         frictionStatic: 0,
       }) as Phaser.Physics.Matter.Sprite;
       m.setData("id", id);
+      m.setData("circle", circle); // Store the circle object
+
+      // number label background (white circle with colored outline)
+      const labelBg = this.add.graphics();
+      labelBg.setDepth(1.5); // Between marble and text
+      m.setData("labelBg", labelBg); // Store graphics object in data
 
       // number label
       const label = this.add
         .text(0, 0, String(id), {
-          fontSize: "16px",
-          color: "#FFFAF0",
+          fontSize: "14px",
+          color: "#000000", // Set text color to black
           fontStyle: "bold",
         })
         .setDepth(2); // Set depth higher than marble
-      label.setOrigin(0.5, 0.55);
+      label.setOrigin(0.5, 0.5); // Center text precisely
       m.setData("label", label); // Store label in data
       this.marbles.push(m);
     }
@@ -272,19 +278,56 @@ export class RaceScene extends Phaser.Scene {
     // Keep labels on marbles, check winner, collect positions
     let winnerFound = false;
     const leaders: { x: number; y: number }[] = [];
-    for (const m of this.marbles) {
+    // Iterate backward to safely remove marbles that cross the finish line
+    for (let i = this.marbles.length - 1; i >= 0; i--) {
+      const m = this.marbles[i];
       const id = m.getData("id");
-      const label = m.getData("label") as Phaser.GameObjects.Text; // Retrieve label from data
+      const label = m.getData("label") as Phaser.GameObjects.Text;
+      const labelBg = m.getData("labelBg") as Phaser.GameObjects.Graphics;
+      const circle = m.getData("circle") as Phaser.GameObjects.Arc; // Get the original circle object
+
+      // Update label and background position
+      label.x = m.x;
+      label.y = m.y;
+      labelBg.x = m.x;
+      labelBg.y = m.y;
+
+      // Redraw the label background
+      labelBg.clear();
+      const marbleColor = circle.fillColor as number; // Get the marble's color from the circle object
+      const circleRadius = 10; // Radius for the white circle
+      const outlineThickness = 2; // Thickness of the outline
+
+      // Draw colorful outline
+      labelBg.lineStyle(outlineThickness, marbleColor, 1);
+      labelBg.strokeCircle(0, 0, circleRadius + outlineThickness / 2);
+
+      // Draw white circle
+      labelBg.fillStyle(0xffffff, 1);
+      labelBg.fillCircle(0, 0, circleRadius);
+
       if (label) {
         label.setPosition(m.x, m.y);
       }
-      if (!winnerFound && m.y >= this.finishY) {
-        winnerFound = true;
-        this.running = false;
-        this.time.delayedCall(10, () => this.onWinner && this.onWinner(id));
+
+      if (m.y >= this.finishY) {
+        if (!winnerFound) {
+          // Only trigger winner logic for the first one
+          winnerFound = true;
+          this.running = false;
+          this.time.delayedCall(10, () => this.onWinner && this.onWinner(id));
+        }
+        // Destroy marble and label
+        label?.destroy();
+        m.destroy();
+        this.marbles.splice(i, 1); // Remove from array
+      } else {
+        // Only add to leaders if not destroyed
+        leaders.push({ x: m.x, y: m.y });
       }
-      leaders.push({ x: m.x, y: m.y });
     }
+
+    this.checkMarbleBounds(); // Call the new method to check and destroy out-of-bounds marbles
 
     // Camera: track all active marbles horizontally and the lowest marble vertically
     let minX = Infinity;
@@ -319,6 +362,59 @@ export class RaceScene extends Phaser.Scene {
       const scaleY = this.scale.gameSize.height / (targetHeight || 1);
       const desiredZoom = clamp(Math.min(scaleX, scaleY), 0.5, 2.5);
       cam.zoomTo(desiredZoom, 750); // Increased duration for smoother zoom
+    }
+  }
+
+  // New method to check and destroy marbles that fall out of bounds
+  private checkMarbleBounds() {
+    const { worldW, worldH } = this;
+    const outOfBoundsY = worldH + 100; // A bit below the world height
+
+    // Track width calculations (re-used from create method)
+    const initialTrackWidth = worldW * 0.8; // Initial width at the top
+    const finalTrackWidth = worldW * 0.4; // Final width at the bottom
+    const trackWidthDecreasePerPx =
+      (initialTrackWidth - finalTrackWidth) / worldH;
+    const wallPhysicsThickness = 20;
+
+    for (let i = this.marbles.length - 1; i >= 0; i--) {
+      const m = this.marbles[i];
+      const label = m.getData("label") as Phaser.GameObjects.Text;
+
+      // Check if marble is too far down
+      if (m.y > outOfBoundsY) {
+        label?.destroy();
+        m.destroy();
+        this.marbles.splice(i, 1);
+        continue;
+      }
+
+      // Check if marble is outside the dynamic wall boundaries
+      // Use the known marble radius (12) for boundary checks
+      const marbleRadius = 12; // Defined on line 211 in create()
+
+      const currentTrackWidth = clamp(
+        initialTrackWidth - m.y * trackWidthDecreasePerPx,
+        finalTrackWidth,
+        initialTrackWidth
+      );
+      const startX = (worldW - currentTrackWidth) / 2;
+      const endX = startX + currentTrackWidth;
+
+      const marbleLeftBound = m.x - marbleRadius;
+      const marbleRightBound = m.x + marbleRadius;
+
+      // Allow for a small buffer to prevent premature destruction
+      const buffer = 5;
+
+      if (
+        marbleLeftBound < startX - wallPhysicsThickness - buffer ||
+        marbleRightBound > endX + wallPhysicsThickness + buffer
+      ) {
+        label?.destroy();
+        m.destroy();
+        this.marbles.splice(i, 1);
+      }
     }
   }
 }
