@@ -116,18 +116,6 @@ export default function MarbleRacePhaser() {
             </div>
           )}
         </div>
-
-        <div style={ui.small}>Numbers (winners highlighted)</div>
-        <div style={ui.history}>
-          {Array.from({ length: MAX }, (_, i) => i + 1).map((n) => {
-            const hit = history.includes(n);
-            return (
-              <div key={n} style={{ ...ui.chip, ...(hit ? ui.chipHit : {}) }}>
-                {n}
-              </div>
-            );
-          })}
-        </div>
       </div>
     </div>
   );
