@@ -2,6 +2,10 @@
 
 This project is an interactive web application that simulates an animated marble race, demonstrating random number generation in a visually engaging way. Built with Astro and Phaser, it provides a fun and dynamic visualization of random outcomes.
 
+## 🌐 Live Demo
+
+Experience the live application here: [Animated Marble Race](https://jaroslaw-weber.github.io/animated-random-number-generator/)
+
 ## ✨ Features
 
 *   **Animated Marble Race**: Watch marbles race to the finish line with smooth animations.
