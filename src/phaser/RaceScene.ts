@@ -59,22 +59,66 @@ export class RaceScene extends Phaser.Scene {
     );
     this.matter.world.setGravity(0, 0.1); // Adjust global gravity
 
-    // Add static walls to prevent marbles from exiting the play area
-    const wallThickness = 50; // Thickness of the walls
-    this.matter.add.rectangle(
-      -wallThickness / 2, // Left wall x-position (half thickness outside world)
-      worldH / 2,
-      wallThickness,
-      worldH,
-      { isStatic: true }
-    );
-    this.matter.add.rectangle(
-      worldW + wallThickness / 2, // Right wall x-position (half thickness outside world)
-      worldH / 2,
-      wallThickness,
-      worldH,
-      { isStatic: true }
-    );
+    // Track width calculations (moved here for reuse)
+    const initialTrackWidth = worldW * 0.8; // Initial width at the top
+    const finalTrackWidth = worldW * 0.4; // Final width at the bottom
+    const trackWidthDecreasePerPx =
+      (initialTrackWidth - finalTrackWidth) / worldH;
+
+    // Add static walls that follow the narrowing track
+    const wallSegmentHeight = 100;
+    const wallVisualThickness = 10; // Visual thickness for debugging
+    const wallPhysicsThickness = 20; // Physics thickness for collision
+
+    for (let y = 0; y < worldH; y += wallSegmentHeight) {
+      const currentTrackWidth = clamp(
+        initialTrackWidth - y * trackWidthDecreasePerPx,
+        finalTrackWidth,
+        initialTrackWidth
+      );
+      const startX = (worldW - currentTrackWidth) / 2;
+      const endX = startX + currentTrackWidth;
+
+      // Left wall segment
+      this.matter.add.rectangle(
+        startX - wallPhysicsThickness / 2, // X position of left wall segment
+        y + wallSegmentHeight / 2, // Y position of segment center
+        wallPhysicsThickness,
+        wallSegmentHeight,
+        { isStatic: true, label: "leftWall" }
+      );
+      // Visual for left wall
+      this.add
+        .rectangle(
+          startX - wallVisualThickness / 2,
+          y + wallSegmentHeight / 2,
+          wallVisualThickness,
+          wallSegmentHeight,
+          0x888888, // Grey color for walls
+          0.5
+        )
+        .setDepth(-5);
+
+      // Right wall segment
+      this.matter.add.rectangle(
+        endX + wallPhysicsThickness / 2, // X position of right wall segment
+        y + wallSegmentHeight / 2, // Y position of segment center
+        wallPhysicsThickness,
+        wallSegmentHeight,
+        { isStatic: true, label: "rightWall" }
+      );
+      // Visual for right wall
+      this.add
+        .rectangle(
+          endX + wallVisualThickness / 2,
+          y + wallSegmentHeight / 2,
+          wallVisualThickness,
+          wallSegmentHeight,
+          0x888888, // Grey color for walls
+          0.5
+        )
+        .setDepth(-5);
+    }
 
     // slides (sensors that add force downward)
     this.slides = [];
@@ -96,29 +140,36 @@ export class RaceScene extends Phaser.Scene {
     this.pegs = [];
     const rows = 15,
       cols = 10;
-    const initialTrackWidth = worldW * 0.8; // Initial width at the top
-    const finalTrackWidth = worldW * 0.4; // Final width at the bottom
-    const trackWidthDecreasePerPx =
-      (initialTrackWidth - finalTrackWidth) / worldH;
+    // initialTrackWidth, finalTrackWidth, trackWidthDecreasePerPx are now defined above
+
+    const pegRadius = 8;
+    const pegColor = 0xaaaaaa; // Grey color for pegs
 
     for (let r = 0; r < rows; r++) {
-      const py = 200 + r * 110 + rand(-6, 6);
+      const y = (worldH / rows) * (r + 0.5); // Distribute rows evenly
       const currentTrackWidth = clamp(
-        initialTrackWidth - py * trackWidthDecreasePerPx,
+        initialTrackWidth - y * trackWidthDecreasePerPx,
         finalTrackWidth,
         initialTrackWidth
       );
       const startX = (worldW - currentTrackWidth) / 2;
-      const colWidth = currentTrackWidth / (cols + 1);
+      const endX = startX + currentTrackWidth;
 
-      for (let c = 0; c < cols; c++) {
-        const px = startX + colWidth * (c + 1) + (r % 2 ? 18 : -18);
-        const peg = this.add.circle(px, py, 6, 0x9fb3c8).setDepth(-2);
-        const matterPeg = this.matter.add.gameObject(peg, {
+      // Adjust cols based on currentTrackWidth to maintain density
+      const effectiveCols = Math.max(
+        5,
+        Math.floor((currentTrackWidth / worldW) * cols)
+      );
+      const colSpacing = currentTrackWidth / (effectiveCols + 1);
+
+      for (let c = 0; c < effectiveCols; c++) {
+        const x = startX + colSpacing * (c + 1);
+        const circle = this.add.circle(x, y, pegRadius, pegColor).setDepth(-2);
+        const body = this.matter.add.gameObject(circle, {
           isStatic: true,
-          shape: { type: "circle", radius: 6 },
-        });
-        this.pegs.push(matterPeg);
+          shape: { type: "circle", radius: pegRadius },
+        }) as Phaser.Physics.Matter.Image;
+        this.pegs.push(body);
       }
     }
 
