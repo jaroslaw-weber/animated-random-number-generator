@@ -1,0 +1,82 @@
+import React from "react";
+
+export const ui: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: "100vh",
+    background: "linear-gradient(#0b1220,#0e172a)",
+    color: "#eef2ff",
+    padding: 16,
+    display: "flex",
+    justifyContent: "center",
+  },
+  wrap: {
+    width: "min(1080px,100%)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  h1: { fontSize: 22, fontWeight: 800, letterSpacing: 0.2 },
+  controls: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  button: {
+    padding: "10px 14px",
+    borderRadius: 14,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "#22c55e",
+    color: "#0b1220",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  buttonAlt: {
+    padding: "10px 14px",
+    borderRadius: 14,
+    border: "1px solid rgba(255,255,255,0.12)",
+    background: "#334155",
+    color: "#e2e8f0",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  checkbox: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    fontSize: 13,
+    opacity: 0.9,
+  },
+  canvasWrap: {
+    borderRadius: 18,
+    overflow: "hidden",
+    border: "1px solid rgba(255,255,255,0.12)",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+  },
+  history: {
+    display: "grid",
+    gridTemplateColumns: "repeat(11, minmax(0,1fr))",
+    gap: 6,
+  },
+  chip: {
+    display: "grid",
+    placeItems: "center",
+    aspectRatio: "1/1",
+    borderRadius: 12,
+    background: "rgba(148,163,184,.1)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    fontWeight: 700,
+  },
+  chipHit: {
+    background: "rgba(34,197,94,.2)",
+    border: "1px solid rgba(34,197,94,.4)",
+    color: "#86efac",
+  },
+  small: { fontSize: 12, opacity: 0.8 },
+};
