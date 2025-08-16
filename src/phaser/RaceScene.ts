@@ -25,7 +25,7 @@ export class RaceScene extends Phaser.Scene {
     worldH: number;
     finishY: number;
   }) {
-    this.numbers = data.numbers;
+    this.numbers = data.numbers || [];
     this.onWinner = data.onWinner;
     this.worldW = data.worldW;
     this.worldH = data.worldH;

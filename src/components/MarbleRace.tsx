@@ -39,6 +39,9 @@ export default function MarbleRacePhaser() {
         Math.min(1080, (containerRef.current!.clientWidth || 1000) * 0.56)
       ),
     };
+    console.log(
+      `[MarbleRace.tsx] Phaser Canvas Dimensions: Width = ${currentConfig.width}, Height = ${currentConfig.height}`
+    );
 
     const game = new Phaser.Game(currentConfig);
     gameRef.current = game;
