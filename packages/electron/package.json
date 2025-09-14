@@ -1,0 +1,22 @@
+{
+  "name": "@random-number-animation/electron",
+  "version": "0.0.1",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "tsc && electron .",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "electron": "^30.0.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "phaser": "^3.90.0",
+    "@random-number-animation/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.0.0"
+  }
+}
