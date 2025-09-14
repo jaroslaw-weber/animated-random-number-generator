@@ -1,11 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
+import { MarbleRace } from '@random-number-animation/core';
+import { ConfigForm } from '@random-number-animation/core';
 
 const App: React.FC = () => {
+  const [currentView, setCurrentView] = useState<'race' | 'config'>('race');
+
   return (
     <div>
-      <h1>Animated Random Number Generator - Electron</h1>
-      <p>Skeleton app ready for component integration.</p>
+      <nav style={{ marginBottom: '20px' }}>
+        <button onClick={() => setCurrentView('race')} style={{ marginRight: '10px' }}>
+          Race
+        </button>
+        <button onClick={() => setCurrentView('config')}>
+          Config
+        </button>
+      </nav>
+      {currentView === 'race' ? <MarbleRace /> : <ConfigForm />}
     </div>
   );
 };
