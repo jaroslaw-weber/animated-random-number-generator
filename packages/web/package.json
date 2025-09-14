@@ -1,10 +1,7 @@
 {
-  "name": "animated-number-app",
-  "type": "module",
+  "name": "@random-number-animation/web",
   "version": "0.0.1",
-  "workspaces": [
-    "./packages/*"
-  ],
+  "type": "module",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -12,12 +9,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/react": "^4.3.0",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
     "astro": "^5.13.2",
-    "phaser": "^3.90.0",
-    "preact": "^10.27.0",
+    "@astrojs/react": "^4.3.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   }
