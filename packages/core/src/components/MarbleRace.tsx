@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { clamp } from "../utils/math";
-import { gameConfig, onWinner } from "../phaser/gameConfig";
-import { RaceScene } from "../phaser/RaceScene";
 import { ui } from "../styles/raceStyles";
 import { worldW, worldH, finishY } from "../constants/game";
 import { getGameConfig, type GameConfig } from "../utils/configLoader";
@@ -15,9 +13,31 @@ export default function MarbleRacePhaser() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const gameRef = useRef<Phaser.Game | null>(null);
   const [gameSettings, setGameSettings] = useState<GameConfig>(getGameConfig());
+  const [phaserModules, setPhaserModules] = useState<{
+    gameConfig: any;
+    onWinner: any;
+    RaceScene: any;
+  } | null>(null);
 
   useEffect(() => {
     setGameSettings(getGameConfig());
+  }, []);
+
+  useEffect(() => {
+    // Dynamically import Phaser modules to avoid SSR issues
+    const loadPhaserModules = async () => {
+      try {
+        const [{ gameConfig, onWinner }, { RaceScene }] = await Promise.all([
+          import("../phaser/gameConfig"),
+          import("../phaser/RaceScene")
+        ]);
+        setPhaserModules({ gameConfig, onWinner, RaceScene });
+      } catch (error) {
+        console.error("Failed to load Phaser modules:", error);
+      }
+    };
+
+    loadPhaserModules();
   }, []);
 
   const maxNumber = useMemo(() => {
@@ -42,10 +62,12 @@ export default function MarbleRacePhaser() {
   };
 
   const launchGame = (numbers: number[], config: GameConfig) => {
+    if (!phaserModules) return;
+
     destroyGame();
 
     const currentConfig = {
-      ...gameConfig,
+      ...phaserModules.gameConfig,
       parent: containerRef.current!,
       width: Math.min(1080, containerRef.current!.clientWidth || 1000),
       height: Math.floor(
@@ -56,15 +78,15 @@ export default function MarbleRacePhaser() {
       `[MarbleRace.tsx] Phaser Canvas Dimensions: Width = ${currentConfig.width}, Height = ${currentConfig.height}`
     );
 
-    const game = new Phaser.Game(currentConfig);
+    const game = new (window as any).Phaser.Game(currentConfig);
     gameRef.current = game;
 
-    game.events.once(Phaser.Core.Events.READY, () => {
-      const scene = game.scene.getScene("Race") as Phaser.Scene;
+    game.events.once((window as any).Phaser.Core.Events.READY, () => {
+      const scene = game.scene.getScene("Race") as any;
       scene.scene.restart({
         numbers,
         onWinner: (id: number) =>
-          onWinner(id, setHistory, setIsRacing, setWinningMarbleId, noRepeats),
+          phaserModules.onWinner(id, setHistory, setIsRacing, setWinningMarbleId, noRepeats),
         worldW,
         worldH,
         finishY,
@@ -78,7 +100,7 @@ export default function MarbleRacePhaser() {
   }, []);
 
   const startRace = () => {
-    if (isRacing) return;
+    if (isRacing || !phaserModules) return;
     if (noRepeats && remaining.length === 0) return;
     setIsRacing(true);
     setWinningMarbleId(null); // Reset winning marble ID at the start of a new race
