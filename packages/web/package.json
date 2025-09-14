@@ -9,8 +9,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.13.2",
     "@astrojs/react": "^4.3.0",
+    "astro": "^5.13.2",
+    "phaser": "^3.90.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "@random-number-animation/core": "workspace:*"
